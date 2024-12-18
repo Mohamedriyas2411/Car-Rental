@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Rental Website</title>
+    <link rel="icon" href="icon.png" type="image/png">
+    <style>
+        /* Reset margin and padding for all elements */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Style for the transparent navbar */
+        .navbar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 30px;
+            position: fixed;
+            top: 0;
+            background: rgba(255, 255, 255, 0.3); /* Transparent white background */
+            backdrop-filter: blur(10px); /* Blur effect */
+            color: #333;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
+
+        /* Style for the logo and name container */
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-logo img {
+            width: 40px; /* Logo size */
+            height: auto;
+            margin-right: 10px;
+        }
+
+        .navbar-logo span {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Style for the navigation links */
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .navbar-links a {
+            text-decoration: none;
+            font-size: 18px;
+            color: #333;
+            transition: color 0.3s ease;
+        }
+
+        /* Hover effect for the links */
+        .navbar-links a:hover {
+            color: #007bff; /* Change to any highlight color */
+        }
+
+        /* Main image container */
+        #img-container {
+            width: 100%;
+            height: 100vh; /* Full viewport height */
+            position: relative;
+        }
+        
+        /* Background image styling */
+        #image1 {
+            width: 100%;
+            height: 100%;
+            display: block;
+            position: relative;
+        }
+
+        /* Text overlay on image */
+        #p1 {
+            position: absolute;
+            top: 35%;
+            left: 60%;
+            font-size: x-large;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            text-align: center;
+        }
+
+        /* Add margin to the heading */
+        #p1 h1 {
+            margin-bottom: 20px; /* Space between text and buttons */
+        }
+
+        /* Button styling */
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+
+        /* Body padding to ensure content is not hidden behind navbar */
+        body {
+            padding-top: 80px; /* Adjust according to navbar height */
+        }
+    </style>
+    <script>
+        // Navigate to login page
+        function navigateToLogin() {
+            window.location.assign('loginpage.html');
+        }
+    </script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <!-- Logo and Brand Name -->
+        <div class="navbar-logo">
+            <img src="icon.png" alt="Logo">
+            <span>IDEAL-RENT</span>
+        </div>
+        
+        <!-- Navigation Links -->
+        <div class="navbar-links">
+            <a href="index.html">Home</a>
+            <a href="about.html">About Us</a>
+            <a href="contact.html">Contact</a>
+        </div>
+    </div>
+
+    <!-- Main Image Section with Overlay Text -->
+    <div id="img-container">
+        <img src="page1.jpg" id="image1" alt="Car Rental Image">
+        <div id="p1">
+            <h1>RENT YOUR CAR OR<br>RENT A CAR</h1>
+            <!-- Single Login Button -->
+            <a href="#login" class="btn" onclick="navigateToLogin()">Login Here</a>
+        </div>
+    </div>
+
+</body>
+</html>
+

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rentee's Dashboard</title>
+    <link rel="stylesheet" href="rentee.css">
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <div class="user-info">
+                <div class="user-id">User ID: <span id="userId"></span></div>           
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+            <h1>Rentee's Dashboard</h1>
+        </header>
+
+        <!-- Search and Request Section -->
+        <section class="search-section">
+            <div class="search-container">
+                <h2>Search Available Cars</h2>
+                <div class="form-group">
+                    <label for="pincode">Enter Pincode:</label>
+                    <input type="text" id="pincode" placeholder="Enter Pincode">
+                </div>
+                <button type="button" id="searchCarsBtn" onclick="searchCars()">Search</button>
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+        </section>
+
+        <!-- Display Available Cars Section -->
+        <section class="available-cars" id="availableCarsSection" style="display: none;">
+            <h2>Available Cars</h2>
+            <table id="carsTable">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Car Model</th>
+                        <th>Address</th>
+                        <th>Per KM Charge</th>
+                        <th>Available From</th>
+                        <th>Available To</th>
+                        <th>Request</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Car Data will be injected here -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Request Status Section -->
+        <section class="request-status" id="requestStatusSection" style="display: none;">
+            <h2>Request Status</h2>
+            <table id="requestStatusTable">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Status</th>
+                        <th>Booking Id</th>
+                        <th>Clear request</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Request Status Data will be injected here -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+    fetchUserId();
+    loadRequestStatus(); // Load request statuses from server
+    loadPreviousSearch();
+});
+
+
+        function fetchUserId() {
+            const userId = localStorage.getItem("loggedInUser");
+            if (userId) {
+                document.getElementById("userId").textContent = userId;
+            } else {
+                alert("User not logged in. Redirecting to login.");
+                window.location.href = "loginpage.html";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("loggedInUser");
+            localStorage.removeItem("searchResults");
+            localStorage.removeItem("requestStates");
+            window.location.href = "loginpage.html";
+        }
+
+        function searchCars() {
+            const pincode = document.getElementById('pincode').value.trim();
+            const errorMessage = document.getElementById('errorMessage');
+            const availableCarsSection = document.getElementById('availableCarsSection');
+
+            if (!/^\d{6}$/.test(pincode)) {
+                errorMessage.textContent = 'Please enter a valid 6-digit pincode.';
+                errorMessage.style.display = 'block';
+                availableCarsSection.style.display = 'none';
+                return;
+            }
+
+            errorMessage.style.display = 'none';
+
+            fetch('http://localhost:3000/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pincode }),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch data from the server');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const carsTable = document.getElementById('carsTable').getElementsByTagName('tbody')[0];
+                    carsTable.innerHTML = '';
+
+                    if (data.success && data.renters.length > 0) {
+                        localStorage.setItem('searchResults', JSON.stringify(data.renters));
+                        displayCars(data.renters);
+                    } else {
+                        errorMessage.textContent = 'No cars found for this pincode.';
+                        errorMessage.style.display = 'block';
+                        availableCarsSection.style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    errorMessage.textContent = 'Error fetching data. Please try again later.';
+                    errorMessage.style.display = 'block';
+                    availableCarsSection.style.display = 'none';
+                });
+        }
+
+        function displayCars(renters) {
+    const carsTable = document.getElementById('carsTable').getElementsByTagName('tbody')[0];
+    const availableCarsSection = document.getElementById('availableCarsSection');
+    const requestStates = JSON.parse(localStorage.getItem('requestStates')) || {};
+
+    carsTable.innerHTML = '';
+    renters.forEach(renter => {
+        const row = carsTable.insertRow();
+        const isRequested = requestStates[renter.userId] === true;
+
+        row.innerHTML = `
+            <td>${renter.userId}</td>
+            <td>${renter.carModel}</td>
+            <td>${renter.address}</td>
+            <td>${renter.price} per km</td>
+            <td>${renter.availability.fromDate} ${renter.availability.fromTime}</td>
+            <td>${renter.availability.toDate} ${renter.availability.toTime}</td>
+            <td>
+                <button class="request-btn" ${isRequested ? 'disabled' : ''} 
+                    onclick="sendRequest('${renter.userId}')">
+                    ${isRequested ? 'Requested' : 'Send Request'}
+                </button>
+            </td>
+        `;
+    });
+
+    availableCarsSection.style.display = 'block';
+}
+
+        function loadPreviousSearch() {
+            const searchResults = JSON.parse(localStorage.getItem('searchResults'));
+            if (searchResults) {
+                displayCars(searchResults);
+            }
+        }
+
+        function sendRequest(ownerId) {
+    const renteeId = localStorage.getItem("loggedInUser");
+    const requestStates = JSON.parse(localStorage.getItem('requestStates')) || {};
+
+    if (!renteeId || !ownerId) {
+        alert("Invalid request. Please login again.");
+        window.location.href = "loginpage.html";
+        return;
+    }
+
+    // Check if request has already been sent to this owner
+    if (requestStates[ownerId]) {
+        alert("You have already sent a request to this owner.");
+        return;
+    }
+
+    fetch('http://localhost:3000/sendRequest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ renteeId, ownerId }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Request sent successfully!");
+            // Update local storage
+            requestStates[ownerId] = true;
+            localStorage.setItem('requestStates', JSON.stringify(requestStates));
+            // Reload the request status section
+            loadRequestStatus();
+        } else {
+            alert("Failed to send request.");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error sending request. Please try again later.");
+    });
+}
+function loadRequestStatus() {
+    const renteeId = localStorage.getItem("loggedInUser");
+    if (!renteeId) {
+        alert("User not logged in. Redirecting to login.");
+        window.location.href = "loginpage.html";
+        return;
+    }
+
+    fetch('http://localhost:3000/getRequestStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ renteeId }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch request status from the server');
+        }
+        return response.json();
+    })
+    .then(data => {
+        const requestStatusSection = document.getElementById('requestStatusSection');
+        const requestStatusTable = document.getElementById('requestStatusTable').getElementsByTagName('tbody')[0];
+        requestStatusTable.innerHTML = '';
+
+        if (data.success && data.requests.length > 0) {
+            const requestStates = {};
+
+            data.requests.forEach(request => {
+                requestStates[request.ownerId] = true; // Mark as requested
+                const row = requestStatusTable.insertRow();
+                row.innerHTML = `
+                    <td>${request.ownerId}</td>
+                    <td>${request.status}</td>
+                    <td>${request.bookingId}</td>
+                    <td>
+                        <button class="clear-btn" onclick="clearRequestRow('${request.ownerId}')">Clear</button>
+                    </td>
+                `;
+            });
+
+            // Update localStorage with the fetched request states
+            localStorage.setItem('requestStates', JSON.stringify(requestStates));
+            requestStatusSection.style.display = 'block';
+        } else {
+            localStorage.removeItem('requestStates'); // Clear if no requests exist
+            requestStatusSection.style.display = 'none';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error fetching request status. Please try again later.');
+    });
+}
+function clearRequestRow(ownerId) {
+    const renteeId = localStorage.getItem("loggedInUser");
+
+    if (!renteeId) {
+        alert("User not logged in. Redirecting to login.");
+        window.location.href = "loginpage.html";
+        return;
+    }
+
+    fetch('http://localhost:3000/clearRequestStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ renteeId, ownerId }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Request status cleared.');
+            // Reload request statuses
+            loadRequestStatus();
+        } else {
+            alert('Failed to clear request status.');
+        }
+    })
+    .catch(err => {
+        console.error('Error clearing request:', err);
+        alert('Error clearing request. Please try again later.');
+    });
+}
+    
+    </script>
+</body>
+</html>

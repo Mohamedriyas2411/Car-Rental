@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Rental Registration</title>
+    <link rel="icon" href="icon.png" type="image/png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Background image styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('page1.jpg');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            color: #fff;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .navbar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 30px;
+            position: fixed;
+            top: 0;
+            background: rgba(255, 255, 255, 0.3); /* Transparent white background */
+            backdrop-filter: blur(10px); /* Blur effect */
+            color: #333;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
+
+        /* Style for the logo and name container */
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-logo img {
+            width: 40px; /* Logo size */
+            height: auto;
+            margin-right: 10px;
+        }
+
+        .navbar-logo span {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Style for the navigation links */
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .navbar-links a {
+            text-decoration: none;
+            font-size: 18px;
+            color: #333;
+            transition: color 0.3s ease;
+        }
+
+        /* Hover effect for the links */
+        .navbar-links a:hover {
+            color: #007bff; /* Change to any highlight color */
+        }
+
+        .registration-container {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 10px;
+            width: 400px;
+            text-align: center;
+            margin-top:20%;
+        }
+
+        .registration-container h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* Input fields styling */
+        input[type="text"], input[type="email"], input[type="password"], input[type="tel"], input[type="textarea"],input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: #f4f4f4;
+        }
+
+        /* Button styling */
+        .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Link to login page */
+        .login-link {
+            margin-top: 10px;
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .login-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Additional fields for rentee and renter */
+        .additional-fields {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .additional-fields input {
+            margin-bottom: 15px;
+        }
+        
+        input[type="number"]#carYear {
+            width: 100%; /* Full width of the form */
+            padding: 16px; /* Increased padding for a bigger box */
+            font-size: 16px; /* Slightly larger text */
+            margin-bottom: 15px; /* Space between inputs */
+            background-color: #f4f4f4;
+            border-radius: 5px;
+        }
+
+
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const roleSelect = document.getElementById("role");
+            const renteeFields = document.getElementById("renteeFields");
+            const renterFields = document.getElementById("renterFields");
+
+            // Show additional fields based on role selection
+            roleSelect.addEventListener("change", function() {
+                if (roleSelect.value === "rentee") {
+                    renteeFields.style.display = "block";
+                    renterFields.style.display = "none";
+                } else if (roleSelect.value === "renter") {
+                    renterFields.style.display = "block";
+                    renteeFields.style.display = "none";
+                } else {
+                    renteeFields.style.display = "none";
+                    renterFields.style.display = "none";
+                }
+            });
+        });
+
+       // Validate individual field on input (for real-time validation)
+function validateField(field) {
+  const error = field.nextElementSibling; // Get the next sibling element (small for error message)
+  const value = field.value.trim(); // Trim whitespace from input value
+
+  // Check if the field is empty
+  if (!value) {
+    error.textContent = "Please fill in this field.";
+    error.style.color = "red";
+    field.style.borderColor = "red";
+  } else {
+    error.textContent = ""; // Clear error message
+    field.style.borderColor = ""; // Reset border color
+  }
+}
+
+// Attach validation to each field on focus (this ensures prior fields show error)
+function handleFocus(event) {
+  const field = event.target;
+  const error = field.nextElementSibling;
+
+  // Ensure that error message is displayed if field is not filled
+  validateField(field);
+}
+
+// Validate the entire form on submission
+function validateForm(event) {
+  event.preventDefault(); // Prevent form submission for validation check
+  const inputs = document.querySelectorAll("#registrationForm input");
+  let isValid = true;
+
+  // Trigger validation for each field
+  inputs.forEach((input) => {
+    validateField(input); // Trigger validation on each field
+    if (input.value.trim() === "") {
+      isValid = false;
+    }
+  });
+
+  // Provide success or failure message based on validation
+  if (isValid) {
+    alert("Form submitted successfully!");
+    // You can uncomment the line below to actually submit the form after validation
+    // event.target.submit();
+  } else {
+    alert("Please fill in all required fields.");
+  }
+}
+
+// Attach the focus event listener to each input field
+document.querySelectorAll("#registrationForm input").forEach(input => {
+  input.addEventListener('focus', handleFocus); // Attach validation on focus
+});
+
+
+        // Include your validation and helper functions
+        function validateName() {
+            const name = document.getElementById('name').value;
+            const error = document.getElementById('name-error');
+            if (/\d/.test(name)) {
+                error.textContent = "Name cannot contain numbers.";
+            } else {
+                error.textContent = "";
+            }
+        }
+
+        function validateCarModel() {
+            const model = document.getElementById('carModel').value;
+            const error = document.getElementById('carModel-error');
+            if (!/^[a-zA-Z0-9]+$/.test(model)) {
+                error.textContent = "Car model must contain only letters and numbers.";
+            } else {
+                error.textContent = "";
+            }
+        }
+        function validateEmail() {
+        const email = document.getElementById('email').value;
+        const errorSpan = document.getElementById('email-error');
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!regex.test(email)) {
+            errorSpan.textContent = 'Please enter a valid email address.';
+        } else {
+            errorSpan.textContent = '';
+        }
+    }
+
+        function validateCarYear() {
+            const year = parseInt(document.getElementById('carYear').value, 10);
+            const error = document.getElementById('carYear-error');
+            const currentYear = new Date().getFullYear();
+            if (isNaN(year) || year < 1990 || year > currentYear) {
+                error.textContent = `Year must be between 1990 and ${currentYear}.`;
+            } else {
+                error.textContent = "";
+            }
+        }
+        function validatePassword() {
+        const password = document.getElementById('password').value;
+        const errorSpan = document.getElementById('password-error');
+        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
+        if (!regex.test(password)) {
+            errorSpan.textContent = 'Password must be at least 8 characters, include uppercase, lowercase, number, and special character.';
+        } else {
+            errorSpan.textContent = '';
+        }
+    }
+
+        function validatePincode() {
+            const pincode = document.getElementById('renterPincode').value || document.getElementById('renteePincode').value;
+            const error = document.getElementById('pincode-error');
+            if (!/^\d{6}$/.test(pincode)) {
+                error.textContent = "Pincode must be a 6-digit number.";
+            } else {
+                error.textContent = "";
+            }
+        }
+        function validateAddress() {
+            const address = document.getElementById('renteeAddress').value.trim() || document.getElementById('renterAddress').value.trim();
+            const errorSpan = document.getElementById('address-error');
+        const regex = /^[a-zA-Z0-9\s,.'-]{5,}$/; // Allows letters, numbers, spaces, commas, periods, hyphens, and apostrophes, with a minimum of 5 characters.
+
+        if (address === '') {
+            errorSpan.textContent = 'Address cannot be empty.';
+        } else if (!regex.test(address)) {
+            errorSpan.textContent = 'Address must contain only letters, numbers, spaces, commas, periods, or hyphens and must be at least 5 characters long.';
+        } else {
+            errorSpan.textContent = '';
+        }
+    }
+
+
+    function validateUserId() {
+    const userId = document.getElementById('userid').value;
+    const errorSpan = document.getElementById('userid-error');
+
+    // Regular expression: at least 10 characters, must contain letters and numbers
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{10,}$/;
+
+    if (!regex.test(userId)) {
+        errorSpan.textContent = 'User ID must be at least 10 characters long and contain both letters and numbers.';
+    } else {
+        errorSpan.textContent = '';
+    }
+}
+
+
+        function validatePrice() {
+            const price = parseFloat(document.getElementById('price').value);
+            const error = document.getElementById('price-error');
+            if (isNaN(price) || price > 20) {
+                error.textContent = "Price must be less than or equal to 20.";
+            } else {
+                error.textContent = "";
+            }
+        }
+        function validatePhone() {
+        const phone = document.getElementById('phone').value;
+        const errorSpan = document.getElementById('phone-error');
+        const regex = /^\d{10}$/;
+
+        if (!regex.test(phone)) {
+            errorSpan.textContent = 'Phone number must be 10 digits.';
+        } else {
+            errorSpan.textContent = '';
+        }
+    }
+
+    function formatAadhaar() {
+    const aadhaarInput = document.getElementById("aadharNumber");
+    const errorSpan = document.getElementById("aadharNumber-error");  // The span for error message
+
+    // Remove non-digit characters
+    let aadhaarValue = aadhaarInput.value.replace(/\D/g, "");
+
+    // If the length exceeds 12 digits, trim it to 12
+    if (aadhaarValue.length > 12) {
+        aadhaarValue = aadhaarValue.slice(0, 12);
+    }
+
+    // Format the Aadhaar number with spaces after every 4 digits
+    let formattedAadhaar = aadhaarValue.replace(/(\d{4})(?=\d)/g, "$1 ");
+    
+    // If the length is exactly 12, prevent further input
+    if (aadhaarValue.length === 12) {
+        formattedAadhaar = formattedAadhaar.slice(0, 14);  // Remove extra space after the last set of digits
+    }
+
+    aadhaarInput.value = formattedAadhaar;
+
+    // Validate the Aadhaar number (must be exactly 12 digits)
+    if (aadhaarValue.length === 12) {
+        // Clear the error message if valid
+        errorSpan.textContent = '';
+    } else {
+        // Display an error message
+        errorSpan.textContent = 'Aadhaar number must be exactly 12 digits.';
+    }
+}
+
+
+function formatLicense() {
+    const licenseInput = document.getElementById("licenseNumber");
+    const invalidMessage = document.getElementById("licenseInvalidMessage");  // The span for error message
+
+    // Format the license number by removing invalid characters
+    let licenseValue = licenseInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+    // Ensure the license number does not exceed 15 characters
+    if (licenseValue.length > 15) licenseValue = licenseValue.slice(0, 15);
+
+    // Ensure the first two characters are uppercase letters
+    const firstTwoLetters = licenseValue.slice(0, 2);
+    if (!/^[A-Z]{2}$/.test(firstTwoLetters)) {
+        invalidMessage.textContent = "The first two characters must be capital letters.";
+        invalidMessage.style.display = "block";
+        return;
+    }
+
+    // Add a dash after the first two letters and ensure only numbers follow
+    if (licenseValue.length > 2) {
+        const letters = licenseValue.slice(0, 2);
+        const numbers = licenseValue.slice(2).replace(/[^0-9]/g, "");
+        licenseValue = `${letters}-${numbers}`;
+    }
+
+    licenseInput.value = licenseValue;
+
+    // Validation: Check if there are non-numeric characters after the dash
+    if (licenseValue.length > 3 && /[^0-9]/.test(licenseValue.slice(3))) {
+        invalidMessage.textContent = "Only numbers are allowed after the dash.";
+        invalidMessage.style.display = "block";
+    } else {
+        invalidMessage.textContent = "";
+        invalidMessage.style.display = "none";
+    }
+}
+
+
+        async function handleRegistration(event) {
+    event.preventDefault(); // Prevents form from refreshing the page
+
+    const termsCheckbox = document.getElementById("termsCheckbox");
+    if (!termsCheckbox.checked) {
+        alert("You must agree to the Terms and Conditions before registering.");
+        return;
+    }
+    // Collecting form data
+    const role = document.getElementById("role").value; // Get the selected role
+
+    // Ensure all required fields are collected based on the role
+    const formData = {
+        userId: document.getElementById('userid').value,
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        phone: document.getElementById('phone').value,
+        role: role, // Set role correctly
+        address: '', // Initialize address field
+        pincode: '', // Initialize pincode field
+        licenseNumber: '', // Initialize license number field
+        aadharNumber: '', // Initialize Aadhar number field
+        carModel: '', // Initialize car model field
+        carYear: '', // Initialize car year field
+        price: '' // Initialize price field
+    };
+
+    // Collect role-specific data
+    if (role === "rentee") {
+        formData.address = document.getElementById('renteeAddress').value;
+        formData.pincode = document.getElementById('renteePincode').value;
+        formData.licenseNumber = document.getElementById('licenseNumber').value;
+        formData.aadharNumber = document.getElementById('aadharNumber').value;
+    } else if (role === "renter") {
+        formData.address = document.getElementById('renterAddress').value;
+        formData.pincode = document.getElementById('renterPincode').value;
+        formData.carModel = document.getElementById('carModel').value;
+        formData.carYear = document.getElementById('carYear').value;
+        formData.price = document.getElementById('price').value;
+    }
+
+    console.log("Form Data:", formData); // Log the form data to verify
+
+    try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+            alert("Registration Successful!");
+            window.location.href = 'loginpage.html'; 
+        } else {
+            alert("Registration Failed: " + result.message);
+        }
+    } catch (error) {
+        console.error("Error during registration:", error);
+        alert("An error occurred. Please try again.");
+    }
+}
+
+    </script>
+</head>
+<body>
+    <div class="registration-container">
+        <h1>Register</h1>
+        <form onsubmit="handleRegistration(event)">
+            <input type="text" id="userid" placeholder="Enter User ID" required oninput="validateUserId()" onblur="validateField(this)">
+            <span id="userid-error" style="color:red;"></span>
+            <input type="text" id="name" placeholder="Enter Full Name" required oninput="validateName()" onblur="validateField(this)">
+            <span id="name-error" style="color:red;"></span>
+            <input type="email" id="email" placeholder="Enter Email Address" required oninput="validateEmail()" onblur="validateField(this)">
+            <span id="email-error" style="color: red;"></span>
+            <input type="password" id="password" placeholder="Enter Password" required oninput="validatePassword()" onblur="validateField(this)">
+            <span id="password-error" style="color:white;"></span>
+            <input type="tel" id="phone" placeholder="Enter Phone Number" required oninput="validatePhone()" onblur="validateField(this)">
+            <span id="phone-error" style="color: white;"></span>
+            
+            <select id="role" required>
+                <option value="">Select Role</option>
+                <option value="rentee">Rentee</option>
+                <option value="renter">Renter</option>
+            </select>
+            
+            <!-- Rentee Fields -->
+            <div id="renteeFields" class="additional-fields">
+                <input type="text" id="renteeAddress" placeholder="Enter Address" oninput="validateAddress()" onblur="validateField(this)">
+                <span id="address-error" style="color: red;"></span>
+                <input type="text" id="renteePincode" placeholder="Enter Pincode" oninput="validatePincode()" onblur="validateField(this)">
+                <span id="pincode-error" style="color: red;"></span>
+                <input type="text" id="licenseNumber" placeholder="Enter License Number" oninput="formatLicense()" onblur="validateField(this)">
+                <span id="licenseInvalidMessage" style="color: red; display: none;"></span>
+                <input type="text" id="aadharNumber" placeholder="Enter Aadhaar Number" oninput="formatAadhaar()" onblur="validateField(this)">
+                <span id="aadharNumber-error" style="color: red;"></span>
+            </div>
+            
+            <!-- Renter Fields -->
+            <div id="renterFields" class="additional-fields">
+                <input type="text" id="renterAddress" placeholder="Enter Address" oninput="validateAddress()" onblur="validateField(this)">
+                <span id="address-error" style="color: red;"></span>
+                <input type="text" id="renterPincode" placeholder="Enter Pincode" oninput="validatePincode()" onblur="validateField(this)">
+                <span id="pincode-error" style="color: red;"></span>
+                <input type="text" id="carModel" placeholder="Enter Car Model" oninput="validateCarModel()" onblur="validateField(this)">
+                <span id="carModel-error" style="color: red;"></span>
+                <input type="number" id="carYear" placeholder="Enter Car Year" oninput="validateCarYear()" onblur="validateField(this)">
+                <span id="carYear-error" style="color: red;"></span>
+                <input type="number" id="price" placeholder="Enter Per Km Charge" oninput="validatePrice()" onblur="validateField(this)">
+                <span id="price-error" style="color: red;"></span>
+            </div>
+            <div>
+                <input type="checkbox" id="termsCheckbox">
+                <label for="termsCheckbox">
+                    I agree to the <a href="terms.html" target="_blank">Terms and Conditions</a>
+                </label>
+            </div>
+            
+            <!-- Submit Button -->
+            <button type="submit" class="btn">Register</button>
+            </form>
+            
+            <!-- Link to Login -->
+            <a href="loginpage.html" class="login-link">Already have an account? Login here.</a>
+            </div>
+            </body>
+            </html>
+            

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Rental Login</title>
+    <link rel="icon" href="icon.png" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('page1.jpg');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            color: #fff;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .navbar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 30px;
+            position: fixed;
+            top: 0;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            color: #333;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-logo img {
+            width: 40px;
+            height: auto;
+            margin-right: 10px;
+        }
+
+        .navbar-logo span {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .navbar-links a {
+            text-decoration: none;
+            font-size: 18px;
+            color: #333;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-links a:hover {
+            color: #007bff;
+        }
+
+        .login-container {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            border-radius: 10px;
+            width: 400px;
+            text-align: center;
+        }
+
+        .login-container h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: #f4f4f4;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .register-link {
+            margin-top: 10px;
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .register-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script>
+        async function validateLogin() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const role = document.getElementById('role').value;
+
+    if (!username || !password || role === "select") {
+        alert("Please fill in all fields.");
+        return false;
+    }
+
+    console.log("Sending login data:", { username, password, role });
+
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password, role })
+        });
+
+        const data = await response.json();
+        console.log("Server response:", data);
+
+        if (data.success) {
+            alert("Login Successful!");
+            localStorage.setItem("loggedInUser", username);
+
+            if (role === "mechanic") {
+                // Store pincode in session storage
+                if (data.pincode) {
+                    sessionStorage.setItem("mechanicPincode", data.pincode);
+                } else {
+                    alert("Pincode not available. Please contact support.");
+                }
+                window.location.assign('mechanic.html');
+            } else if (role === "rentee") {
+                window.location.assign('rentee.html');
+            } else if (role === "renter") {
+                window.location.assign('renter.html');
+            }
+        } else {
+            alert(data.message || "Invalid credentials. Please register if you are a new user.");
+        }
+    } catch (error) {
+        console.error("Login error:", error);
+        alert("An error occurred during login. Please try again.");
+    }
+}
+
+        function redirectToRegister() {
+            window.location.assign('register.html');
+        }
+    </script>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-logo">
+            <img src="icon.png" alt="Logo">
+            <span>IDEAL-RENT</span>
+        </div>
+        <div class="navbar-links">
+            <a href="index.html">Home</a>
+            <a href="about.html">About Us</a>
+            <a href="contact.html">Contact</a>
+        </div>
+    </div>
+
+    <div class="login-container">
+        <h1>Login</h1>
+        <form onsubmit="event.preventDefault(); validateLogin();">
+            <input type="text" id="username" placeholder="Enter User ID" required> <!-- Updated placeholder -->
+            <input type="password" id="password" placeholder="Enter Password" required>
+            <select id="role">
+                <option value="select">Select Role</option>
+                <option value="rentee">Rentee</option>
+                <option value="renter">Renter</option>
+                <option value="mechanic">Mechanic</option>
+            </select>
+            <button type="submit" class="btn">Login</button>
+        </form>
+        <a href="#" class="register-link" onclick="redirectToRegister()">Don't have an account? Register here</a>
+    </div>
+</body>
+</html>

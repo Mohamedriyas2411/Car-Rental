@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mechanic Dashboard</title>
+    <link rel="stylesheet" href="rentee.css">
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <div class="user-info">
+                <div class="user-id">User ID: <span id="userId"></span></div>           
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+            <h1>Mechanic Dashboard</h1>
+        </header>
+        <section class="available-cars" id="availableCarsSection" style="display: block;">
+            <h2>New car bookings in your pincode</h2>
+            <table id="bookingsTable">
+                </thead>
+                <tbody>
+                    <!-- Car Data will be injected here -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+    fetchUserId();
+    fetchBookings();
+});
+
+function fetchUserId() {
+    const userId = localStorage.getItem("loggedInUser");
+    if (userId) {
+        document.getElementById("userId").textContent = userId;
+    } else {
+        alert("User not logged in. Redirecting to login.");
+        window.location.href = "loginpage.html";
+    }
+}
+
+async function fetchBookings() {
+    const pincode = sessionStorage.getItem('mechanicPincode');
+
+    if (!pincode) {
+        alert('Pincode not found. Please log in again.');
+        return;
+    }
+
+    const response = await fetch('http://localhost:3000/fetchMechanicBookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pincode }),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+        const bookings = result.bookings;
+        localStorage.setItem("bookingsData", JSON.stringify(bookings));
+
+        const table = document.getElementById('bookingsTable');
+        table.innerHTML = `
+            <tr>
+                <th>Renter Name</th>
+                <th>Rentee ID</th>
+                <th>Renter Phone</th>
+                <th>Rentee Phone</th>
+                <th>Booking ID</th>
+                <th>Request Date</th>
+                <th>Actions</th>
+            </tr>
+        `;
+
+        bookings.forEach(booking => {
+            const row = table.insertRow();
+            row.innerHTML = `
+                <td>${booking.renterName}</td>
+                <td>${booking.renteeId}</td>
+                <td>${booking.renterPhone}</td>
+                <td>${booking.renteePhone}</td>
+                <td>${booking.bookingId}</td>
+                <td>${new Date(booking.requestDate).toLocaleString()}</td>
+                <td>
+                    <button class="request-btn" onclick="generateBill('${booking.bookingId}', this)">Generate Bill</button>
+                </td>
+            `;
+        });
+    } else {
+        alert(result.message);
+    }
+}
+
+function generateBill(bookingId, button) {
+    localStorage.setItem("currentBookingId", bookingId);
+
+    // Remove the row from the table
+    const row = button.closest('tr');
+    row.remove();
+
+    window.location.href = "billing.html";
+}
+
+function logout() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "loginpage.html";
+}
+
+    </script>
+    
+</body>
+</html>

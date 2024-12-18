@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renter's Dashboard</title>
+    <link rel="stylesheet" href="renter.css">
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <h1>Renter Dashboard</h1>
+            <div class="user-id">User ID: <span id="userId"></span></div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </header>
+
+        <section>
+            <h2>Car Availability</h2>
+            <form id="availabilityForm">
+                <input type="hidden" id="availabilityId">
+                <div class="form-group">
+                    <label for="fromDate">From Date:</label>
+                    <input type="date" id="fromDate">
+                </div>
+                <div class="form-group">
+                    <label for="toDate">To Date:</label>
+                    <input type="date" id="toDate">
+                </div>
+                <div class="form-group">
+                    <label for="fromTime">From Time:</label>
+                    <div class="time-group" style="display: flex; gap: 15px; align-items: center;">
+                        <input type="number" id="fromHours" min="1" max="12" placeholder="HH" 
+                               style="width: 80px; height: 40px; font-size: 16px; text-align: center; padding: 5px;" 
+                               oninput="validateTimeInput(this, 1, 12)">
+                        <span>:</span>
+                        <input type="number" id="fromMinutes" min="0" max="59" placeholder="MM" 
+                               style="width: 80px; height: 40px; font-size: 16px; text-align: center; padding: 5px;" 
+                               oninput="validateTimeInput(this, 0, 59)">
+                        <select id="fromAmPm" 
+                                style="width: 80px; height: 40px; font-size: 16px; text-align: center; padding: 5px;">
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="toTime">To Time:</label>
+                    <div class="time-group" style="display: flex; gap: 15px; align-items: center;">
+                        <input type="number" id="toHours" min="1" max="12" placeholder="HH" 
+                               style="width: 80px; height: 40px; font-size: 16px; text-align: center; padding: 5px;" 
+                               oninput="validateTimeInput(this, 1, 12)">
+                        <span>:</span>
+                        <input type="number" id="toMinutes" min="0" max="59" placeholder="MM" 
+                               style="width: 80px; height: 40px; font-size: 16px; text-align: center; padding: 5px;" 
+                               oninput="validateTimeInput(this, 0, 59)">
+                        <select id="toAmPm" 
+                                style="width: 80px; height: 40px; font-size: 16px; text-align: center; padding: 5px;">
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="button" onclick="updateAvailability()">Update Availability</button>
+            </form>
+
+        </section>
+
+        <section>
+            <h2>Incoming Requests</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="requestsTableBody">
+                </tbody>
+            </table>
+        </section>
+        <section>
+            <div id="acceptedRequestsContainer">
+                <h3>Accepted Requests</h3>
+                <table id="acceptedRequestsTable">
+                  <thead>
+                    <tr>
+                      <th>Rentee's Name</th>
+                      <th>Status</th>
+                      <th>Booking ID</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+    fetchUserId();
+    fetchRequests();
+    fetchAcceptedRequests();
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+    document.getElementById("fromDate").value = today;
+    document.getElementById("fromDate").setAttribute("min", today); // Disable past dates in the calendar
+    document.getElementById("toDate").setAttribute("min", today); // Set the value of the "From Date"
+});
+
+function validateTimeInput(input, min, max) {
+    if (input.value < min) input.value = min;
+    if (input.value > max) input.value = max;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const now = new Date();
+
+    // Get current hour in 12-hour format
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    const isPm = hours >= 12;
+
+    // Convert hours to 12-hour format
+    hours = hours % 12 || 12;
+
+    // Prefill the inputs
+    document.getElementById("fromHours").value = hours;
+    document.getElementById("fromMinutes").value = minutes.toString().padStart(2, "0"); // Add leading zero
+    document.getElementById("fromAmPm").value = isPm ? "PM" : "AM";
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetchUserId();
+});
+
+function fetchUserId() {
+    const userId = localStorage.getItem("loggedInUser");
+    if (userId) {
+        document.getElementById("userId").textContent = userId;
+    } else {
+        alert("User not logged in. Redirecting to login.");
+        window.location.href = "loginpage.html";
+    }
+}
+
+// Function to handle the form submission and time validation
+async function updateAvailability() {
+    const userId = localStorage.getItem("loggedInUser");
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
+    const fromHours = document.getElementById("fromHours").value;
+    const fromMinutes = document.getElementById("fromMinutes").value;
+    const fromAmPm = document.getElementById("fromAmPm").value;
+    const toHours = document.getElementById("toHours").value;
+    const toMinutes = document.getElementById("toMinutes").value;
+    const toAmPm = document.getElementById("toAmPm").value;
+    const availabilityId = document.getElementById("availabilityId").value; // Get the hidden field value
+
+    if (!fromDate || !toDate || !fromHours || !fromMinutes || !toHours || !toMinutes) {
+        alert("Please fill in all fields!");
+        return;
+    }
+
+    // Construct time strings and convert to 24-hour format for comparison
+    const fromTime24 = convertTo24Hour(fromHours, fromMinutes, fromAmPm);
+    const toTime24 = convertTo24Hour(toHours, toMinutes, toAmPm);
+
+    // Convert dates to Date objects for comparison
+    const fromDateTime = new Date(`${fromDate}T${fromTime24}:00`);
+    const toDateTime = new Date(`${toDate}T${toTime24}:00`);
+
+    // Validate the time range based on the date comparison
+    if (fromDate === toDate && fromDateTime >= toDateTime) {
+        alert("The start time must be earlier than the end time on the same day.");
+        return;
+    }
+
+    // If dates are different or valid within the same day, proceed with the submission
+    const availabilityData = { userId, availabilityId, fromDate, toDate, fromTime24, toTime24 };
+
+    try {
+        const response = await fetch("/updateAvailability", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(availabilityData),
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            alert(result.message);
+            location.reload(); // Optionally reload the page
+        } else {
+            const result = await response.json();
+            alert(`Failed to update availability: ${result.message}`);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred.");
+    }
+}
+
+// Helper function to convert 12-hour AM/PM to 24-hour format
+function convertTo24Hour(hours, minutes, ampm) {
+    let hour = parseInt(hours, 10);
+    minutes = parseInt(minutes, 10);
+
+    if (ampm === "PM" && hour !== 12) {
+        hour += 12;
+    }
+    if (ampm === "AM" && hour === 12) {
+        hour = 0;
+    }
+
+    return `${hour.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+}
+
+
+        function logout() {
+            localStorage.removeItem("loggedInUser");
+            window.location.href = "loginpage.html";
+        }
+        
+        async function fetchRequests() {
+            const userId = localStorage.getItem("loggedInUser");
+            try {
+                const response = await fetch(`/getRequests?userId=${userId}`);
+                const data = await response.json();
+                displayRequests(data.requests || []);
+            } catch (error) {
+                console.error("Error fetching requests:", error);
+            }
+        }
+
+        function displayRequests(requests) {
+    const tableBody = document.getElementById("requestsTableBody");
+    tableBody.innerHTML = "";
+
+    requests.forEach((request) => {
+        const row = document.createElement("tr");
+        row.setAttribute("data-rentee-id", request.renteeId); // Add unique identifier
+        row.innerHTML = `
+            <td>${request.renteeId}</td>
+            <td>${request.renteeAddress}</td>
+            <td class="status-cell">${request.status}</td>
+           
+            <td>
+                <button class="btn accept-btn" onclick="acceptRequest('${request.renteeId}')">Accept</button>
+                <button class="btn decline-btn" onclick="declineRequest('${request.renteeId}')">Decline</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+function addToAcceptedRequestsTable(request) {
+    const acceptedRequestsTable = document.getElementById('acceptedRequestsTable').getElementsByTagName('tbody')[0];
+
+    const newRow = acceptedRequestsTable.insertRow();
+    newRow.innerHTML = `
+        <td>${request.renteeId}</td>
+        <td>${request.bookingId}</td>
+        <td>${request.status}</td>
+        <td><button class="clearBtn" onclick="clearAcceptedRequest('${request.bookingId}')">Clear</button></td>
+    `;
+
+    const requestRow = document.querySelector(`tr[data-rentee-id="${request.renteeId}"]`);
+    if (requestRow) {
+        const acceptBtn = requestRow.querySelector(".accept-btn");
+        if (acceptBtn) acceptBtn.disabled = true;
+
+        const declineBtn = requestRow.querySelector(".decline-btn");
+        if (declineBtn) declineBtn.disabled = true;
+
+        const statusCell = requestRow.querySelector(".status-cell");
+        if (statusCell) statusCell.textContent = "Accepted";
+    }
+}
+
+
+async function acceptRequest(renteeId) {
+    const renterId = localStorage.getItem("loggedInUser");
+    if (!renterId) {
+        alert("User not logged in. Redirecting to login.");
+        window.location.href = "loginpage.html";
+        return;
+    }
+
+    const bookingId = generateBookingId(); 
+
+    try {
+        const response = await fetch('/acceptRequest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ renterId, renteeId }),
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            const { bookingId, renteePhone } = result; 
+
+            alert(`Request accepted successfully. Booking ID: ${bookingId}`);
+            const acceptedRequest = { renteeId, bookingId, renteePhone, status: 'Accepted' };
+            
+            addToAcceptedRequestsTable(acceptedRequest); 
+            saveToLocalStorage(acceptedRequest); 
+            notifyRentee(renteeId, bookingId); 
+        } else {
+            alert('Error accepting request: ' + result.message);
+        }
+    } catch (error) {
+        console.error("Error accepting request:", error);
+        alert('Failed to accept the request. Please try again.');
+    }
+}
+
+function generateBookingId() {
+  return 'BOOK' + Date.now(); 
+}
+function clearAcceptedRequest(bookingId) {
+  const table = document.getElementById('acceptedRequestsTable');
+  const rows = table.getElementsByTagName('tbody')[0].rows;
+  for (let row of rows) {
+    if (row.cells[2].textContent === bookingId) {
+      row.remove();
+      break;
+    }
+  }
+
+  let acceptedRequests = JSON.parse(localStorage.getItem('acceptedRequests')) || [];
+  acceptedRequests = acceptedRequests.filter(request => request.bookingId !== bookingId);
+  localStorage.setItem('acceptedRequests', JSON.stringify(acceptedRequests));
+}
+
+window.onload = () => {
+  const acceptedRequests = JSON.parse(localStorage.getItem('acceptedRequests')) || [];
+  const acceptedRequestsTable = document.getElementById('acceptedRequestsTable').getElementsByTagName('tbody')[0];
+
+  acceptedRequests.forEach(request => {
+    const newRow = acceptedRequestsTable.insertRow();
+    newRow.innerHTML = `
+      <td>${request.renteeName}</td>
+      <td>${request.status}</td>
+      <td>${request.bookingId}</td>
+      <td><button class="clearBtn" onclick="clearAcceptedRequest('${request.bookingId}')">Clear</button></td>
+    `;
+  });
+};
+
+async function clearRequest(renteeId) {
+    const response = await fetch('/clearAcceptedRequest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ renterId: 'RENT_USER_ID', renteeId }) 
+    });
+    const data = await response.json();
+
+    if (data.success) {
+        alert('Request cleared successfully');
+        fetchAcceptedRequests(); 
+    } else {
+        alert('Error clearing request');
+    }
+}
+
+function notifyRentee(renteeId, bookingId) {
+    fetch('http://localhost:3000/notifyRentee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ renteeId, bookingId }), 
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log(`Rentee ${renteeId} notified about Booking ID: ${bookingId}`);
+        } else {
+            console.error("Failed to notify Rentee:", data.message);
+        }
+    })
+    .catch(err => console.error("Error notifying Rentee:", err));
+}
+
+async function fetchAcceptedRequests() {
+    const response = await fetch('/getAcceptedRequests?userId=RENT_USER_ID');  
+    const data = await response.json();
+
+    if (data.success) {
+        const table = document.getElementById('acceptedRequestsTable');
+        table.innerHTML = ''; 
+
+        data.acceptedRequests.forEach(request => {
+            const row = table.insertRow();
+            row.insertCell(0).textContent = request.renteeName;
+            row.insertCell(1).textContent = request.bookingId;
+            row.insertCell(2).textContent = request.status;
+        });
+    } else {
+        alert('No accepted requests found');
+    }
+}
+
+function declineRequest(renteeId) {
+    const renterId = localStorage.getItem("loggedInUser");
+
+    if (!renterId) {
+        alert("User not logged in. Redirecting to login.");
+        window.location.href = "loginpage.html";
+        return;
+    }
+
+    fetch('http://localhost:3000/updateRequestStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ renterId, renteeId, status: 'Rejected' }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Request rejected successfully.");
+            updateRequestRow(renteeId, "Rejected");
+        } else {
+            alert("Failed to reject the request: " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error("Error rejecting request:", err);
+        alert("Error rejecting request. Please try again later.");
+    });
+}
+
+function updateRequestRow(renteeId, status, bookingId) {
+    const row = document.querySelector(`tr[data-rentee-id="${renteeId}"]`);
+    if (row) {
+        row.querySelector(".status-cell").textContent = status;
+        row.querySelector(".booking-id-cell").textContent = bookingId || "N/A";
+        const acceptBtn = row.querySelector(".accept-btn");
+        if (acceptBtn) acceptBtn.disabled = true;
+        const declineBtn = row.querySelector(".decline-btn");
+        if (declineBtn) declineBtn.disabled = true;
+    }
+}
+
+function removeRequestRow(renteeId) {
+    const row = document.querySelector(`tr[data-rentee-id="${renteeId}"]`);
+    if (row) {
+        row.remove();
+    }
+}
+
+    </script>
+</body>
+</html>
