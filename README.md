@@ -15,10 +15,10 @@ Example mechanic details to add in the Mechanic collection
 }
 
 {
-  "userId": "Vivin1234",
-  "password": "123456789",
+  "userId": "Mani1234",
+  "password": "789456123",
   "role": "mechanic",
-  "pincode": "620003"
+  "pincode": "620004"
 }
 
 Functional Highlights:
