@@ -38,7 +38,7 @@ Below are sample entries for the `Mechanic` collection in the database:
 }
 
 
-**Functional Highlights:**
+Functional Highlights:
 Renters can update car availability times dynamically.
 Booking IDs are sent to the rentee's email after a request is accepted.
 Mechanics can inspect vehicles, generate bills, and ensure car safety.
